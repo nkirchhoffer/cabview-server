@@ -14,8 +14,8 @@ app.get('/random', async (req, res) => {
     const query = store.createQuery('Video').order('timestamp');
     const [videos] = await store.runQuery(query);
     
-    const video = videos[Math.floor(Math.random() * videos.length)].url;
-    const id = new URL(video).searchParams.get('v');
+    const video = videos[Math.floor(Math.random() * videos.length)];
+    const id = new URL(video.url).searchParams.get('v');
 
     return res.json({
         id,

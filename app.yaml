@@ -1,4 +1,4 @@
 runtime: nodejs16
-service: default
+service: api
 automatic_scaling:
   max_instances: 2
