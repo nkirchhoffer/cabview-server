@@ -1,21 +1,14 @@
 const express = require('express');
+const cors = require('cors');
 const app = express();
 const bodyParser = require('body-parser');
-
-const path = require('path');
 
 const { Datastore } = require('@google-cloud/datastore'); 
 const store = new Datastore();
 
-const cons = require('consolidate');
+app.use(cors());
 
 app.use(bodyParser.json());
-
-app.use('/assets', express.static('assets'));
-app.engine('html', cons.handlebars);
-
-app.set('view engine', 'html');
-app.set('views', path.join(__dirname, 'views'));
 
 app.get('/random', async (req, res) => {
     const query = store.createQuery('Video').order('timestamp');
@@ -24,12 +17,13 @@ app.get('/random', async (req, res) => {
     const video = videos[Math.floor(Math.random() * videos.length)].url;
     const id = new URL(video).searchParams.get('v');
 
-    return res.render('index', {
-        video: `https://www.youtube.com/embed/${id}`
+    return res.json({
+        id,
+        ...video
     });
 });
 
-app.post('/api/videos', async (req, res) => {
+app.post('/videos', async (req, res) => {
     const video = req.body.video;
     const id = new URL(video).searchParams.get('v');
 
@@ -61,7 +55,20 @@ app.post('/api/videos', async (req, res) => {
     }
 });
 
-app.get('/api/videos', async (req, res) => {
+app.get('/videos', async (req, res) => {
+    const page = req.query.page;
+
+    if (page) {
+        const n = 18;
+        const offset = page * n; 
+        const query = store.createQuery('Video').order('timestamp', {
+            descending: true
+        }).offset(offset).limit(n);
+        const [videos] = await store.runQuery(query);
+
+        return res.json(videos);
+    }
+
     const query = store.createQuery('Video').order('timestamp');
     const [videos] = await store.runQuery(query);
 
